@@ -1,0 +1,9 @@
+ipykernel==6.29.5
+openai
+python-dotenv==1.0.1
+streamlit==1.37.1
+streamlit_webrtc
+moviepy==1.0.3
+pydub==0.25.1
+ffmpeg
+imageio-ffmpeg
