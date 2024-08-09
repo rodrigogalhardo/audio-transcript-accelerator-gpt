@@ -101,10 +101,10 @@ def transcreve_tab_mic():
             else:
                 break
 
-    except FileNotFoundError as e:
+    except Exception as e:
         st.error(f'Erro: {e}')
         st.stop()
-        
+
 
 # TRANSCREVE VIDEO =====================================
 def _salva_audio_do_video(video_bytes):
