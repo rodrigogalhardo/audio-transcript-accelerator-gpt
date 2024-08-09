@@ -62,43 +62,49 @@ def adiciona_chunck_de_audio(frames_de_audio, chunck_audio):
 
 
 def transcreve_tab_mic():
-    prompt_mic = st.text_input('(opcional) Digite o seu prompt', key='input_mic')
-    webrtx_ctx = webrtc_streamer(
-        key='recebe_audio',
-        mode=WebRtcMode.SENDONLY,
-        audio_receiver_size=1024,
-        media_stream_constraints={'video': False, 'audio': True}
-    )
 
-    if not webrtx_ctx.state.playing:
-        st.write(st.session_state['transcricao_mic'])
-        return
+    try:
+        prompt_mic = st.text_input('(opcional) Digite o seu prompt', key='input_mic')
+        webrtx_ctx = webrtc_streamer(
+            key='recebe_audio',
+            mode=WebRtcMode.SENDONLY,
+            audio_receiver_size=1024,
+            media_stream_constraints={'video': False, 'audio': True}
+        )
 
-    container = st.empty()
-    container.markdown('Comece a falar...')
-    chunck_audio = pydub.AudioSegment.empty()
-    tempo_ultima_transcricao = time.time()
-    st.session_state['transcricao_mic'] = ''
-    while True:
-        if webrtx_ctx.audio_receiver:
-            try:
-                frames_de_audio = webrtx_ctx.audio_receiver.get_frames(timeout=1)
-            except queue.Empty:
-                time.sleep(0.1)
-                continue
-            chunck_audio = adiciona_chunck_de_audio(frames_de_audio, chunck_audio)
+        if not webrtx_ctx.state.playing:
+            st.write(st.session_state['transcricao_mic'])
+            return
 
-            agora = time.time()
-            if len(chunck_audio) > 0 and agora - tempo_ultima_transcricao > 10:
-                tempo_ultima_transcricao = agora
-                chunck_audio.export(ARQUIVO_MIC_TEMP)
-                transcricao = transcreve_audio(ARQUIVO_MIC_TEMP, prompt_mic)
-                st.session_state['transcricao_mic'] += transcricao
-                container.write(st.session_state['transcricao_mic'])
-                chunck_audio = pydub.AudioSegment.empty()
-        else:
-            break
+        container = st.empty()
+        container.markdown('Comece a falar...')
+        chunck_audio = pydub.AudioSegment.empty()
+        tempo_ultima_transcricao = time.time()
+        st.session_state['transcricao_mic'] = ''
+        while True:
+            if webrtx_ctx.audio_receiver:
+                try:
+                    frames_de_audio = webrtx_ctx.audio_receiver.get_frames(timeout=1)
+                except queue.Empty:
+                    time.sleep(0.1)
+                    continue
+                chunck_audio = adiciona_chunck_de_audio(frames_de_audio, chunck_audio)
 
+                agora = time.time()
+                if len(chunck_audio) > 0 and agora - tempo_ultima_transcricao > 10:
+                    tempo_ultima_transcricao = agora
+                    chunck_audio.export(ARQUIVO_MIC_TEMP)
+                    transcricao = transcreve_audio(ARQUIVO_MIC_TEMP, prompt_mic)
+                    st.session_state['transcricao_mic'] += transcricao
+                    container.write(st.session_state['transcricao_mic'])
+                    chunck_audio = pydub.AudioSegment.empty()
+            else:
+                break
+
+    except FileNotFoundError as e:
+        st.error(f'Erro: {e}')
+        st.stop()
+        
 
 # TRANSCREVE VIDEO =====================================
 def _salva_audio_do_video(video_bytes):
